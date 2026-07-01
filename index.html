@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Send to WhatsApp</title>
+<meta name="description" content="Type a number, tap once, land in the chat." />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0E7C5A" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="WA Send" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#EFEAE2;
+    --card:#FFFFFF;
+    --ink:#1B2420;
+    --muted:#6B7268;
+    --line:#E1DACB;
+    --accent:#0E7C5A;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#E4F2EC;
+    --danger:#B3261E;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:env(safe-area-inset-top,0) 16px calc(env(safe-area-inset-bottom,0) + 16px);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{
+    width:100%;
+    max-width:420px;
+    padding-top:max(28px, env(safe-area-inset-top));
+    padding-bottom:28px;
+  }
+  header{
+    text-align:center;
+    margin-bottom:22px;
+  }
+  header .mark{
+    width:52px;height:52px;border-radius:14px;
+    background:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 14px;
+  }
+  header h1{
+    font-family:'Manrope',sans-serif;
+    font-weight:800;
+    font-size:22px;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    font-size:14px;
+    color:var(--muted);
+  }
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:0 1px 2px rgba(27,36,32,.04), 0 12px 28px -12px rgba(27,36,32,.12);
+    border:1px solid var(--line);
+  }
+  label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:7px;
+  }
+  .field{margin-bottom:16px;}
+  .row{
+    display:flex;
+    gap:10px;
+  }
+  select, input, textarea{
+    width:100%;
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:16px;
+    color:var(--ink);
+    background:#FAF9F6;
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:13px 14px;
+    outline:none;
+    transition:border-color .15s ease, background .15s ease;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  select:focus, input:focus, textarea:focus{
+    border-color:var(--accent);
+    background:#fff;
+  }
+  select{
+    flex:0 0 132px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'><path d='M1 1l6 6 6-6' stroke='%236B7268' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    padding-right:30px;
+  }
+  .phone-group{
+    flex:1;
+    position:relative;
+    display:flex;
+  }
+  .phone-group input{padding-right:44px;}
+  .paste-btn{
+    position:absolute;
+    right:6px;top:6px;bottom:6px;
+    width:34px;
+    border:none;
+    background:transparent;
+    color:var(--muted);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:8px;
+  }
+  .paste-btn:hover{background:var(--accent-soft); color:var(--accent);}
+  textarea{resize:none; min-height:52px; font-size:15px;}
+  .hint{
+    font-size:12.5px;
+    color:var(--muted);
+    margin-top:6px;
+  }
+  .hint.error{color:var(--danger);}
+  .preview{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    background:var(--accent-soft);
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:18px;
+    min-height:20px;
+  }
+  .preview .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--accent);
+    margin-top:6px;
+    flex:none;
+  }
+  .preview p{
+    margin:0;
+    font-size:13.5px;
+    line-height:1.4;
+    color:#1B4636;
+  }
+  .preview p b{font-weight:700;}
+  .preview.idle{background:transparent; padding:0 2px;}
+  .preview.idle p{color:var(--muted);}
+  button.primary{
+    width:100%;
+    border:none;
+    border-radius:14px;
+    background:var(--accent);
+    color:var(--accent-ink);
+    font-family:'Manrope',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    padding:15px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:transform .08s ease, opacity .15s ease, background .15s ease;
+  }
+  button.primary:disabled{
+    background:#C9C2B2;
+    cursor:not-allowed;
+  }
+  button.primary:not(:disabled):active{transform:scale(.98);}
+  .remember{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    margin-top:14px;
+    font-size:12.5px;
+    color:var(--muted);
+  }
+  .install-banner{
+    margin-top:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px;
+    display:none;
+    align-items:center;
+    gap:12px;
+  }
+  .install-banner.show{display:flex;}
+  .install-banner .txt{flex:1;}
+  .install-banner .txt b{display:block; font-size:13.5px; font-family:'Manrope',sans-serif;}
+  .install-banner .txt span{font-size:12px; color:var(--muted);}
+  .install-banner button{
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+    font-size:12.5px;
+    padding:9px 12px;
+    border-radius:9px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:24px;
+    transform:translateX(-50%) translateY(10px);
+    background:#1B2420;
+    color:#fff;
+    padding:10px 16px;
+    border-radius:10px;
+    font-size:13.5px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    z-index:20;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  footer{
+    text-align:center;
+    margin-top:20px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="mark">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M4 20l1.6-4.8A8 8 0 1 1 9.2 19L4 20z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+        <path d="M9 12l2.3 2.3L15 10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+    <h1>Send to WhatsApp</h1>
+    <p>No saving contacts. Just chat.</p>
+  </header>
+
+  <div class="card">
+
+    <div class="field">
+      <label for="country">Country</label>
+      <div class="row">
+        <select id="country" aria-label="Country code"></select>
+        <div class="phone-group">
+          <input id="phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="98765 43210" aria-label="Phone number" />
+          <button class="paste-btn" id="pasteBtn" type="button" title="Paste from clipboard" aria-label="Paste from clipboard">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+              <path d="M9 3.5h6a1 1 0 011 1V5h1.5A1.5 1.5 0 0119 6.5v14A1.5 1.5 0 0117.5 22h-11A1.5 1.5 0 015 20.5v-14A1.5 1.5 0 016.5 5H8v-.5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" fill="none"/>
+              <path d="M9 5V4a1 1 0 011-1h4a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.6" fill="none"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <p class="hint" id="phoneHint">Digits only — no dashes needed.</p>
+    </div>
+
+    <div class="field">
+      <label for="message">Message <span style="text-transform:none;font-weight:500;">(optional)</span></label>
+      <textarea id="message" placeholder="Hey! Just checking in…" maxlength="500"></textarea>
+    </div>
+
+    <div class="preview idle" id="preview">
+      <div class="dot" style="display:none"></div>
+      <p id="previewText">Enter a number to see where this goes.</p>
+    </div>
+
+    <button class="primary" id="openBtn" disabled type="button">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M4 20l1.6-4.8A8 8 0 1 1 9.2 19L4 20z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+        <path d="M9 12l2.3 2.3L15 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      Open in WhatsApp
+    </button>
+
+    <div class="remember" id="rememberNote" style="display:none;">
+      <span>Remembering</span><b id="rememberedCountry"></b>
+    </div>
+  </div>
+
+  <div class="install-banner" id="installBanner">
+    <div class="txt">
+      <b id="installTitle">Add to your home screen</b>
+      <span id="installSub">Install once, open in one tap next time.</span>
+    </div>
+    <button id="installBtn" type="button">Add</button>
+  </div>
+
+  <footer>Works offline once installed · Your numbers stay on your device</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- Country data (name, ISO2, dial code) ----------
+const COUNTRIES = [
+["India","IN","91"],["United States","US","1"],["United Kingdom","GB","44"],
+["Indonesia","ID","62"],["Brazil","BR","55"],["Pakistan","PK","92"],
+["Nigeria","NG","234"],["Bangladesh","BD","880"],["Mexico","MX","52"],
+["Philippines","PH","63"],["Egypt","EG","20"],["Vietnam","VN","84"],
+["DR Congo","CD","243"],["Turkey","TR","90"],["Iran","IR","98"],
+["Germany","DE","49"],["Thailand","TH","66"],["France","FR","33"],
+["South Africa","ZA","27"],["Tanzania","TZ","255"],["Italy","IT","39"],
+["Myanmar","MM","95"],["Kenya","KE","254"],["South Korea","KR","82"],
+["Colombia","CO","57"],["Spain","ES","34"],["Uganda","UG","256"],
+["Argentina","AR","54"],["Algeria","DZ","213"],["Sudan","SD","249"],
+["Iraq","IQ","964"],["Afghanistan","AF","93"],["Poland","PL","48"],
+["Canada","CA","1"],["Morocco","MA","212"],["Saudi Arabia","SA","966"],
+["Uzbekistan","UZ","998"],["Peru","PE","51"],["Angola","AO","244"],
+["Malaysia","MY","60"],["Mozambique","MZ","258"],["Ghana","GH","233"],
+["Yemen","YE","967"],["Nepal","NP","977"],["Venezuela","VE","58"],
+["Madagascar","MG","261"],["Cameroon","CM","237"],["North Korea","KP","850"],
+["Australia","AU","61"],["Niger","NE","227"],["Sri Lanka","LK","94"],
+["Burkina Faso","BF","226"],["Mali","ML","223"],["Chile","CL","56"],
+["Kazakhstan","KZ","7"],["Malawi","MW","265"],["Zambia","ZM","260"],
+["Netherlands","NL","31"],["Ecuador","EC","593"],["Syria","SY","963"],
+["Cambodia","KH","855"],["Chad","TD","235"],["Senegal","SN","221"],
+["Somalia","SO","252"],["Zimbabwe","ZW","263"],["Guinea","GN","224"],
+["Rwanda","RW","250"],["Benin","BJ","229"],["Burundi","BI","257"],
+["Tunisia","TN","216"],["Bolivia","BO","591"],["Belgium","BE","32"],
+["Haiti","HT","509"],["Cuba","CU","53"],["South Sudan","SS","211"],
+["Dominican Republic","DO","1"],["Czech Republic","CZ","420"],
+["Greece","GR","30"],["Jordan","JO","962"],["Portugal","PT","351"],
+["Sweden","SE","46"],["Hungary","HU","36"],["Belarus","BY","375"],
+["United Arab Emirates","AE","971"],["Israel","IL","972"],
+["Switzerland","CH","41"],["Austria","AT","43"],["Serbia","RS","381"],
+["Singapore","SG","65"],["Denmark","DK","45"],["Finland","FI","358"],
+["Norway","NO","47"],["Ireland","IE","353"],["New Zealand","NZ","64"],
+["Qatar","QA","974"],["Kuwait","KW","965"],["Bahrain","BH","973"],
+["Oman","OM","968"],["Lebanon","LB","961"],["Ukraine","UA","380"],
+["Romania","RO","40"],["Bulgaria","BG","359"],["Croatia","HR","385"],
+["Ethiopia","ET","251"],["Ivory Coast","CI","225"],["Hong Kong","HK","852"],
+["Taiwan","TW","886"],["Japan","JP","81"],["China","CN","86"],
+["Russia","RU","7"],["Fiji","FJ","679"],["Jamaica","JM","1"],
+["Trinidad & Tobago","TT","1"],["Papua New Guinea","PG","675"],
+];
+COUNTRIES.sort((a,b)=>a[0].localeCompare(b[0]));
+
+function flagEmoji(iso2){
+  return iso2.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+
+const countrySel = document.getElementById('country');
+COUNTRIES.forEach(([name, iso2, dial]) => {
+  const opt = document.createElement('option');
+  opt.value = dial;
+  opt.dataset.iso = iso2;
+  opt.textContent = `${flagEmoji(iso2)} ${name} (+${dial})`;
+  countrySel.appendChild(opt);
+});
+
+// ---------- Elements ----------
+const phoneInput = document.getElementById('phone');
+const messageInput = document.getElementById('message');
+const openBtn = document.getElementById('openBtn');
+const pasteBtn = document.getElementById('pasteBtn');
+const previewBox = document.getElementById('preview');
+const previewText = document.getElementById('previewText');
+const previewDot = previewBox.querySelector('.dot');
+const phoneHint = document.getElementById('phoneHint');
+const toast = document.getElementById('toast');
+const rememberNote = document.getElementById('rememberNote');
+const rememberedCountry = document.getElementById('rememberedCountry');
+
+// ---------- Restore last used country ----------
+const savedDial = localStorage.getItem('wa_last_country');
+if (savedDial) {
+  const match = [...countrySel.options].find(o => o.value === savedDial);
+  if (match) {
+    countrySel.value = savedDial;
+    rememberedCountry.textContent = match.textContent.replace(/^\S+\s/, '');
+    rememberNote.style.display = 'flex';
+  }
+} else {
+  // default to India if present, else first option
+  const india = [...countrySel.options].find(o => o.dataset.iso === 'IN');
+  if (india) countrySel.value = india.value;
+}
+
+countrySel.addEventListener('change', () => {
+  localStorage.setItem('wa_last_country', countrySel.value);
+  rememberNote.style.display = 'none';
+  updateState();
+});
+
+// ---------- Helpers ----------
+function cleanDigits(v){ return (v || '').replace(/\D/g, ''); }
+
+function groupDigits(d){
+  if (d.length <= 4) return d;
+  if (d.length <= 8) return d.slice(0, d.length-4) + ' ' + d.slice(-4);
+  return d.slice(0, d.length-4-3) + ' ' + d.slice(-7,-4) + ' ' + d.slice(-4);
+}
+
+function buildLink(){
+  const dial = countrySel.value;
+  const digits = cleanDigits(phoneInput.value).replace(/^0+/, '');
+  const text = messageInput.value.trim();
+  if (!dial || digits.length < 6) return null;
+  let url = `https://wa.me/${dial}${digits}`;
+  if (text) url += `?text=${encodeURIComponent(text)}`;
+  return { url, dial, digits };
+}
+
+function updateState(){
+  const digitsRaw = cleanDigits(phoneInput.value);
+  const built = buildLink();
+
+  if (!digitsRaw) {
+    previewBox.classList.add('idle');
+    previewDot.style.display = 'none';
+    previewText.textContent = 'Enter a number to see where this goes.';
+    phoneHint.textContent = 'Digits only — no dashes needed.';
+    phoneHint.classList.remove('error');
+    openBtn.disabled = true;
+    return;
+  }
+
+  if (digitsRaw.length < 6) {
+    previewBox.classList.add('idle');
+    previewDot.style.display = 'none';
+    previewText.textContent = 'Keep typing — that looks short for a phone number.';
+    phoneHint.textContent = `${digitsRaw.length} digit${digitsRaw.length===1?'':'s'} entered.`;
+    phoneHint.classList.remove('error');
+    openBtn.disabled = true;
+    return;
+  }
+
+  previewBox.classList.remove('idle');
+  previewDot.style.display = 'block';
+  const iso = countrySel.selectedOptions[0]?.dataset.iso || '';
+  const cleanedDigits = digitsRaw.replace(/^0+/, '');
+  previewText.innerHTML = `This opens a chat with <b>${flagEmoji(iso)} +${countrySel.value} ${groupDigits(cleanedDigits)}</b>`;
+  phoneHint.textContent = 'Digits only — no dashes needed.';
+  phoneHint.classList.remove('error');
+  openBtn.disabled = !built;
+}
+
+phoneInput.addEventListener('input', () => {
+  // keep only digits and spaces as user types, but store raw digits logically
+  updateState();
+});
+messageInput.addEventListener('input', updateState);
+
+openBtn.addEventListener('click', () => {
+  const built = buildLink();
+  if (!built) return;
+  window.open(built.url, '_blank');
+});
+
+pasteBtn.addEventListener('click', async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text) { showToast('Clipboard is empty'); return; }
+    applyPastedNumber(text);
+  } catch (err) {
+    showToast('Allow clipboard access to paste');
+  }
+});
+
+function applyPastedNumber(raw){
+  let str = raw.trim();
+  const hasPlus = str.startsWith('+');
+  let digits = cleanDigits(str);
+  if (!digits) { showToast('No number found in clipboard'); return; }
+
+  if (hasPlus) {
+    // find the longest matching dial code
+    const sorted = [...COUNTRIES].sort((a,b)=>b[2].length - a[2].length);
+    const match = sorted.find(([,,dial]) => digits.startsWith(dial));
+    if (match) {
+      countrySel.value = match[2];
+      phoneInput.value = digits.slice(match[2].length);
+      localStorage.setItem('wa_last_country', match[2]);
+      rememberNote.style.display = 'none';
+      showToast(`Pasted — matched ${match[0]}`);
+      updateState();
+      return;
+    }
+  }
+  phoneInput.value = digits;
+  showToast('Pasted number');
+  updateState();
+}
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// ---------- Install prompt (Android/Chrome) ----------
+let deferredPrompt = null;
+const installBanner = document.getElementById('installBanner');
+const installBtn = document.getElementById('installBtn');
+const installTitle = document.getElementById('installTitle');
+const installSub = document.getElementById('installSub');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBanner.classList.add('show');
+});
+
+installBtn.addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') installBanner.classList.remove('show');
+    deferredPrompt = null;
+  } else {
+    // iOS fallback: show manual steps
+    showToast('Tap Share, then "Add to Home Screen"');
+  }
+});
+
+// iOS Safari: beforeinstallprompt never fires — show manual instructions instead
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+if (isIOS && !isStandalone) {
+  installTitle.textContent = 'Add to Home Screen';
+  installSub.textContent = 'Tap the Share icon, then "Add to Home Screen".';
+  installBtn.textContent = 'How?';
+  installBanner.classList.add('show');
+}
+
+window.addEventListener('appinstalled', () => {
+  installBanner.classList.remove('show');
+});
+
+// ---------- Service worker ----------
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+updateState();
+</script>
+</body>
+</html>
